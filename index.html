@@ -1,0 +1,55 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>synaptix</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 引入 Monaco Editor -->
+    <script src="./node_modules/monaco-editor/min/vs/loader.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- 頂部菜單欄 -->
+        <div class="menu-bar">
+            <div  class="menu-item" id="new-file-button">新建</div>
+            <div class="menu-item" id="open-file">打開</div>
+            <div class="menu-item" id="save-file">保存</div>
+            <div class="menu-item" id="compile">編譯</div>
+            <div class="menu-item" id="run">運行</div>
+        </div>
+
+        <!-- 分頁欄 -->
+        <div class="tabs-container">
+            <div class="tabs" id="tabs">
+                <!-- 分頁將在這裡動態生成 -->
+            </div>
+            <div class="new-tab" id="new-tab">+</div>
+        </div>
+
+        <!-- 主要內容區域 -->
+        <div class="main-content">
+            <!-- 左側：編輯器 -->
+            <div class="editor-container" id="editor-container"></div>
+
+            <!-- 右側：輸出控制台 -->
+            <div class="console-container">
+                <div class="console-header">
+                    <span>控制台輸出</span>
+                    <button id="clear-console">清除</button>
+                </div>
+                <div class="console-content" id="console-output"></div>
+            </div>
+        </div>
+
+        <!-- 底部狀態欄 -->
+        <div class="status-bar">
+            <div class="status-item" id="cursor-position">行 1, 列 1</div>
+            <div class="status-item" id="file-type">C++</div>
+        </div>
+    </div>
+
+    <script src="./renderer.js"></script>
+</body>
+
+</html>

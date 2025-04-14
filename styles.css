@@ -1,0 +1,218 @@
+:root {
+  --bg-color: #1e1e1e;
+  --text-color: #d4d4d4;
+  --accent-color: #0078d7;
+  --panel-color: #252526;
+  --border-color: #333333;
+  --tab-active-color: #1e1e1e;
+  --tab-inactive-color: #2d2d2d;
+  --status-bar-color: #007acc;
+  --console-bg: #1e1e1e;
+  --console-text: #d4d4d4;
+  --console-error: #f48771;
+  --menu-hover: #2a2d2e;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* 頂部菜單欄 */
+.menu-bar {
+  display: flex;
+  background-color: var(--panel-color);
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.menu-item {
+  padding: 5px 15px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+  background-color: var(--menu-hover);
+}
+
+/* 分頁欄 */
+.tabs-container {
+  display: flex;
+  background-color: var(--tab-inactive-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tabs {
+  display: flex;
+  flex-grow: 1;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.tab {
+  padding: 8px 20px;
+  cursor: pointer;
+  background-color: var(--tab-inactive-color);
+  border-right: 1px solid var(--border-color);
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.tab.active {
+  background-color: var(--tab-active-color);
+  border-bottom: 2px solid var(--accent-color);
+}
+
+.tab-title {
+  font-size: x-small;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+}
+
+.tab-close {
+  margin-left: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.tab-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.new-tab {
+  padding: 8px 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-left: 1px solid var(--border-color);
+}
+
+.new-tab:hover {
+  background-color: var(--menu-hover);
+}
+
+/* 主要內容區域 */
+.main-content {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.editor-container {
+  flex-grow: 3;
+  height: 100%;
+}
+
+.console-container {
+  flex-grow: 1;
+  min-width: 250px;
+  max-width: 30%;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-color);
+  background-color: var(--console-bg);
+}
+
+.console-header {
+  padding: 5px 10px;
+  background-color: var(--panel-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#clear-console {
+  padding: 2px 8px;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+#clear-console:hover {
+  background-color: var(--menu-hover);
+}
+
+.console-content {
+  padding: 10px;
+  height: 100%;
+  overflow-y: auto;
+  font-family: 'Consolas', 'Source Code Pro', monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.console-content .error {
+  color: var(--console-error);
+}
+
+.console-content .success {
+  color: #6a9955;
+}
+
+/* 底部狀態欄 */
+.status-bar {
+  display: flex;
+  background-color: var(--status-bar-color);
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+.status-item {
+  margin-right: 15px;
+}
+
+/* Monaco Editor 樣式調整 */
+.monaco-editor .margin {
+  background-color: var(--bg-color) !important;
+}
+
+/* 可選的滾動條樣式 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}

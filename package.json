@@ -1,0 +1,26 @@
+{
+  "name": "synaptix",
+  "version": "1.0.0",
+  "description": "a c++ compiler",
+  "homepage": "https://github.com/lbc0841/Synaptix#readme",
+  "bugs": {
+    "url": "https://github.com/lbc0841/Synaptix/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lbc0841/Synaptix.git"
+  },
+  "license": "ISC",
+  "author": "lbc0841",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^35.1.5"
+  },
+  "dependencies": {
+    "monaco-editor": "^0.52.2"
+  }
+}
