@@ -1,17 +1,15 @@
-// const { ipcRenderer } = require('electron');
-
 // 初始化編輯器
 let editor;
 let currentOpenFilePath = null;
 let activeTabId = null;
 const openTabs = new Map(); // 使用 Map 來存儲所有打開的標籤頁
 
-// hello world
-const helloWorld_py = 
-'print("hello, world")';
+// hello world --------------------------------------------------------------------------------------------
+const helloWorld_py =
+    'print("hello, world")';
 
 const helloWorld_c =
-'#include <stdio.h>\n\
+    '#include <stdio.h>\n\
 \n\
 int main(){\n\
 \tprintf("hello, world");\n\
@@ -20,7 +18,7 @@ int main(){\n\
 }';
 
 const helloWorld_cpp =
-'#include <bits/stdc++.h>\n\
+    '#include <bits/stdc++.h>\n\
 using namespace std;\n\
 \n\
 int main(){\n\
@@ -30,11 +28,17 @@ int main(){\n\
 }';
 
 const helloWorld_java =
-'print("hello, world")';
+    'public class HelloWorld\n\
+{\n\
+\tpublic static void main(String[] args)\n\
+\t{\n\
+\t\tSystem.out.println("Hello World!");\n\
+\t}\n\
+}';
 
 
 
-// Monaco 編輯器初始化
+// Monaco 編輯器初始化 ------------------------------------------------------------------------------------
 require.config({ paths: { 'vs': './node_modules/monaco-editor/min/vs' } });
 require(['vs/editor/editor.main'], function () {
     // 創建編輯器實例
@@ -62,7 +66,7 @@ require(['vs/editor/editor.main'], function () {
     createNewTab('Unnamed.cpp', helloWorld_cpp);
 });
 
-// 創建新標籤頁
+// 創建新標籤頁 --------------------------------------------------------------------------------------------
 function createNewTab(filename, content, filePath = null) {
     const tabId = 'tab-' + Date.now();
     const tabsContainer = document.getElementById('tabs');
@@ -102,7 +106,7 @@ function createNewTab(filename, content, filePath = null) {
     activateTab(tabId);
 }
 
-// 啟用標籤頁
+// 啟用標籤頁 --------------------------------------------------------------------------------------------
 function activateTab(tabId) {
     // 移除所有標籤頁的活動狀態
     document.querySelectorAll('.tab').forEach(tab => {
@@ -131,7 +135,7 @@ function activateTab(tabId) {
     document.title = openTabs.get(tabId).filename + ' - cpp';
 }
 
-// 關閉標籤頁
+// 關閉標籤頁 --------------------------------------------------------------------------------------------
 function closeTab(tabId) {
     const tabElement = document.getElementById(tabId);
     const tabInfo = openTabs.get(tabId);
@@ -161,143 +165,136 @@ function closeTab(tabId) {
 
 
 
-// 新建文件
-const newFileButton = document.getElementById('new-file-button');
-newFileButton.addEventListener('click', function () {
-
-    // ipcRenderer.send('new-file-dialog');
+// 打開文件 --------------------------------------------------------------------------------------------
+const openFileButton = document.getElementById('open-file-button');
+openFileButton.addEventListener('click', function () {
+    window.fileManager.openFile();
 });
 
-// 打開文件
-document.getElementById('open-file').addEventListener('click', function () {
-    // ipcRenderer.send('open-file-dialog');
+// 接收文件打開結果
+window.fileManager.onOpenFileResult((result) => {
+    if (result.success) {
+        createNewTab(result.filename, result.content, result.path);
+        addConsoleMessage(`Opend ${result.path}`, 'success');
+    }
+    else {
+        addConsoleMessage(`Error: ${result.error}`, 'error');
+    }
 });
 
-// 保存文件
-document.getElementById('save-file').addEventListener('click', function () {
+// 儲存文件 --------------------------------------------------------------------------------------------
+const saveFileButton = document.getElementById('save-file-button');
+saveFileButton.addEventListener('click', function () {
     if (activeTabId && openTabs.has(activeTabId)) {
         const tabInfo = openTabs.get(activeTabId);
         const content = editor.getValue();
 
         if (tabInfo.filePath) {
-            ipcRenderer.send('save-file', {
-                content: content,
-                path: tabInfo.filePath
-            });
-        } else {
-            // 如果沒有文件路徑，打開保存對話框
-            // 這裡可以實現保存為新文件的功能
-            // ...
+            window.fileManager.saveFile(content, tabInfo.filePath);
+        }
+        else {
+            window.fileManager.saveFileAs(content);
         }
     }
 });
 
-// 編譯代碼
-document.getElementById('compile').addEventListener('click', function () {
+// 接收文件儲存結果
+window.fileManager.onSaveFileResult((result) => {
+    if (result.success) {
+        addConsoleMessage(`文件已保存: ${result.path}`, 'success');
+
+        if (activeTabId && openTabs.has(activeTabId)) {
+            const tabInfo = openTabs.get(activeTabId);
+            tabInfo.filePath = result.path;
+            tabInfo.title = path.basename(result.path); // 可選，用於顯示 tab 標題
+            updateTabTitle(activeTabId, tabInfo.title); // 你可自定義這個函式更新 UI
+        }
+    }
+    else {
+        addConsoleMessage(`保存文件失敗: ${result.error}`, 'error');
+    }
+});
+
+
+// 編譯代碼 --------------------------------------------------------------------------------------------
+const compileButton = document.getElementById('compile-button');
+compileButton.addEventListener('click', function () {
     if (activeTabId && openTabs.has(activeTabId)) {
         const content = editor.getValue();
         const filePath = openTabs.get(activeTabId).filePath;
 
+        clearConsole();
+
         // 顯示編譯中訊息
         addConsoleMessage('正在編譯...', 'info');
 
-        // ipcRenderer.send('compile-cpp', content, filePath);
+        window.cppCompiler.compile('compile-cpp', content, null);
     }
 });
 
-// 運行代碼
-document.getElementById('run').addEventListener('click', function () {
-    // 需要先編譯才能運行
-    // 這裡可以實現先編譯再運行的邏輯
-    // ...
+// 接收編譯結果
+window.cppCompiler.onResult((result) => {
+    if (result.success) {
+        // console.log('編譯成功，執行檔路徑:', result.executablePath);
+        addConsoleMessage('編譯成功');
+    } else {
+        // console.error('編譯失敗:', result.error);
+        addConsoleMessage('Error : ' + result.error, 'error');
+    }
 });
 
-// 清空控制台
-document.getElementById('clear-console').addEventListener('click', function () {
+
+// 運行代碼 --------------------------------------------------------------------------------------------
+// 存儲最後一次編譯成功的可執行文件路徑
+let lastExecutablePath = null;
+const runButton = document.getElementById('run-button');
+runButton.addEventListener('click', function () {
+    if (lastExecutablePath) {
+        addConsoleMessage('正在運行程序...', 'info');
+        // window.electronAPI.send('run-executable', lastExecutablePath);
+    } else {
+        addConsoleMessage('請先編譯程序', 'error');
+    }
+});
+
+// 清空控制台 --------------------------------------------------------------------------------------------
+const clearConsoleButton = document.getElementById('clear-console');
+clearConsoleButton.addEventListener('click', function () {
     clearConsole();
 });
 
-// 添加一個 "+" 新標籤按鈕
-document.getElementById('new-tab').addEventListener('click', function () {
+// 新增分頁 ----------------------------------------------------------------------------------------------
+const newTabButton = document.getElementById('new-tab');
+newTabButton.addEventListener('click', function () {
     createNewTab('Unnamed.cpp', helloWorld_cpp);
 });
 
-// 接收文件創建結果
-// ipcRenderer.on('file-created', (event, result) => {
-//     if (result.success) {
-//         createNewTab(result.filename, '', result.path);
-//         addConsoleMessage(`已創建文件: ${result.path}`, 'success');
-//     } else {
-//         addConsoleMessage(`創建文件失敗: ${result.error}`, 'error');
-//     }
-// });
 
-// 接收文件打開結果
-// ipcRenderer.on('file-opened', (event, result) => {
-//     if (result.success) {
-//         createNewTab(result.filename, result.content, result.path);
-//         addConsoleMessage(`已打開文件: ${result.path}`, 'success');
-//     } else {
-//         addConsoleMessage(`打開文件失敗: ${result.error}`, 'error');
-//     }
-// });
-
-// 接收文件保存結果
-// ipcRenderer.on('file-saved', (event, result) => {
-//     if (result.success) {
-//         addConsoleMessage(`文件已保存: ${result.path}`, 'success');
-//     } else {
-//         addConsoleMessage(`保存文件失敗: ${result.error}`, 'error');
-//     }
-// });
-
-// 接收編譯結果
-// ipcRenderer.on('compilation-result', (event, result) => {
-//     if (result.success) {
-//         addConsoleMessage('編譯成功!', 'success');
-//         // 保存可執行文件路徑供運行使用
-//         lastExecutablePath = result.executablePath;
-
-//         // 啟用運行按鈕
-//         document.getElementById('run').classList.add('active');
-//     } else {
-//         addConsoleMessage('編譯失敗:\n' + result.error, 'error');
-//     }
-// });
 
 // 接收執行結果
-// ipcRenderer.on('execution-result', (event, result) => {
-//     if (result.success) {
-//         addConsoleMessage('程序輸出:\n' + result.output, 'output');
-//     } else {
-//         addConsoleMessage('執行錯誤:\n' + result.error, 'error');
-//     }
-// });
+window.electronAPI.on('execution-result', (event, result) => {
+    if (result.success) {
+        addConsoleMessage('程序輸出:\n' + result.output, 'output');
+    } else {
+        addConsoleMessage('執行錯誤:\n' + result.error, 'error');
+    }
+});
 
-// 向控制台添加消息
+// 向控制台添加消息 ---------------------------------------------------------------------------
 function addConsoleMessage(message, type = 'info') {
     const consoleOutput = document.getElementById('console-output');
     const messageElement = document.createElement('div');
     messageElement.className = type;
+
+
     messageElement.textContent = message;
     consoleOutput.appendChild(messageElement);
     consoleOutput.scrollTop = consoleOutput.scrollHeight;
 }
 
-// 清空控制台
+// 清空控制台 --------------------------------------------------------------------------------
 function clearConsole() {
     document.getElementById('console-output').innerHTML = '';
 }
 
-// 用於存儲最後一次編譯成功的可執行文件路徑
-let lastExecutablePath = null;
 
-// 修改運行按鈕事件
-// document.getElementById('run').addEventListener('click', function () {
-//     if (lastExecutablePath) {
-//         addConsoleMessage('正在運行程序...', 'info');
-//         ipcRenderer.send('run-executable', lastExecutablePath);
-//     } else {
-//         addConsoleMessage('請先編譯程序', 'error');
-//     }
-// });

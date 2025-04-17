@@ -1,8 +1,10 @@
 // 用於控制應用程式生命週期和建立本機瀏覽器視窗的模組
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { exec, spawn } = require('child_process');
+
+const iconv = require('iconv-lite');
 const path = require('node:path');
 const fs = require('fs');
-const { exec } = require('child_process');
 
 
 const createWindow = () => {
@@ -20,6 +22,7 @@ const createWindow = () => {
     })
 
     // 全螢幕
+    // mainWindow.setFullScreen(true);
     mainWindow.maximize();
 
     // 加载 index.html
@@ -58,12 +61,84 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit()
 })
 
-// 在当前文件中你可以引入所有的主进程代码
-// 也可以拆分成几个文件，然后用 require 导入。
+// app.quit().then(() => app.relaunch());
 
 
-// 編譯C++代碼
+// 儲存文件 --------------------------------------------------------------------------------------------
+// 儲存
+ipcMain.on('save-file', (event, { content, path: filePath }) => {
+    try {
+        fs.writeFileSync(filePath, content);
+        event.reply('file-saved', { success: true, path: filePath });
+    }
+    catch (err) {
+        event.reply('file-saved', { success: false, error: err.message });
+    }
+});
+
+// 另存新檔
+ipcMain.on('save-file-dialog', async (event, content) => {
+    const { filePath, canceled } = await dialog.showSaveDialog({
+        title: '另存新檔',
+        defaultPath: 'untitled.cpp',
+        filters: [{ name: 'C++ Files', extensions: ['cpp', 'h', 'hpp', 'cc'] }]
+    });
+
+    if (!canceled && filePath) {
+        try {
+            fs.writeFileSync(filePath, content);
+            event.reply('file-saved', { success: true, path: filePath });
+        }
+        catch (err) {
+            event.reply('file-saved', { success: false, error: err.message });
+        }
+    }
+    else {
+        // 取消儲存
+    }
+});
+
+// 開啟文件  --------------------------------------------------------------------------------------------
+ipcMain.on('open-file-dialog', (event) => {
+    dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile'],
+        filters: [
+            { name: 'C++ Files', extensions: ['cpp', 'h', 'hpp', 'cc'] }
+        ]
+    }).then(result => {
+        if (!result.canceled && result.filePaths.length > 0) {
+            const filePath = result.filePaths[0];
+            try {
+                const content = fs.readFileSync(filePath, 'utf8');
+
+                event.reply('file-opened', {
+                    success: true,
+                    path: filePath,
+                    content: content,
+                    filename: path.basename(filePath)
+                });
+            }
+            catch (err) {
+                event.reply('file-opened', {
+                    success: false,
+                    error: err.message
+                });
+            }
+        }
+        else{
+            // 取消開啟檔案
+        }
+    }).catch(err => {
+        event.reply('file-opened', {
+            success: false,
+            error: '開啟檔案對話框時發生錯誤'
+        });
+    });
+});
+
+// 編譯代碼 --------------------------------------------------------------------------------------------
 ipcMain.on('compile-cpp', (event, code, filepath) => {
+
     const tempDir = path.join(app.getPath('temp'), 'cpp-editor');
     if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
@@ -78,7 +153,8 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
             path.dirname(filepath),
             path.basename(filepath, path.extname(filepath))
         );
-    } else {
+    }
+    else {
         sourceFile = path.join(tempDir, 'temp.cpp');
         outputFile = path.join(tempDir, 'temp');
         fs.writeFileSync(sourceFile, code);
@@ -87,13 +163,25 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
     // 執行編譯命令 (根據不同平台可能需要調整)
     const command = `g++ "${sourceFile}" -o "${outputFile}"`;
 
-    exec(command, (error, stdout, stderr) => {
+    exec(command, { encoding: 'buffer' }, (error, stdout, stderr) => {
         if (error) {
+
+            // 文字編碼
+            let decodedError;
+            if (process.platform === 'win32') {
+                decodedError = iconv.decode(stderr, 'cp950');
+            }
+            else {
+                decodedError = stderr.toString('utf-8');  // Linux/macOS 預設為 UTF-8
+            }
+            
             event.reply('compilation-result', {
                 success: false,
-                error: stderr
+                error: decodedError
             });
-        } else {
+        }
+        else {
+
             event.reply('compilation-result', {
                 success: true,
                 output: stdout,
@@ -103,84 +191,43 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
     });
 });
 
-// 運行編譯後的程序
+// 運行代碼 --------------------------------------------------------------------------------------------
 ipcMain.on('run-executable', (event, executablePath) => {
-    exec(executablePath, (error, stdout, stderr) => {
-        if (error) {
-            event.reply('execution-result', {
-                success: false,
-                error: stderr
-            });
-        } else {
-            event.reply('execution-result', {
-                success: true,
-                output: stdout
-            });
-        }
+    const start = process.hrtime();  // 高精度時間測量
+
+    const child = spawn(executablePath);
+
+    let stdoutData = '';
+    let stderrData = '';
+
+    child.stdin.write(inputData || '');
+    child.stdin.end();
+
+    child.stdout.on('data', (data) => {
+        stdoutData += data.toString();
     });
-});
 
-// 處理文件操作
-ipcMain.on('save-file', (event, { content, path: filePath }) => {
-    try {
-        fs.writeFileSync(filePath, content);
-        event.reply('file-saved', { success: true, path: filePath });
-    } catch (err) {
-        event.reply('file-saved', { success: false, error: err.message });
-    }
-});
-
-ipcMain.on('open-file-dialog', (event) => {
-    dialog.showOpenDialog(mainWindow, {
-        properties: ['openFile'],
-        filters: [
-            { name: 'C++ Files', extensions: ['cpp', 'h', 'hpp', 'cc'] }
-        ]
-    }).then(result => {
-        if (!result.canceled && result.filePaths.length > 0) {
-            const filePath = result.filePaths[0];
-            try {
-                const content = fs.readFileSync(filePath, 'utf8');
-                event.reply('file-opened', {
-                    success: true,
-                    path: filePath,
-                    content: content,
-                    filename: path.basename(filePath)
-                });
-            } catch (err) {
-                event.reply('file-opened', {
-                    success: false,
-                    error: err.message
-                });
-            }
-        }
+    child.stderr.on('data', (data) => {
+        stderrData += data.toString();
     });
-});
 
-ipcMain.on('new-file-dialog', (event) => {
-    console.log('顯示新建文件對話框');
+    child.on('close', (code) => {
+        const end = process.hrtime(start);
+        const execTimeMs = end[0] * 1000 + end[1] / 1e6; // 轉換為毫秒
 
-    dialog.showSaveDialog(mainWindow, {
-        title: '新建文件',
-        filters: [
-            { name: 'C++ Files', extensions: ['cpp'] }
-        ]
-    }).then(result => {
-        if (!result.canceled && result.filePath) {
-            try {
-                // 創建空文件
-                fs.writeFileSync(result.filePath, '');
-                event.reply('file-created', {
-                    success: true,
-                    path: result.filePath,
-                    filename: path.basename(result.filePath)
-                });
-            } catch (err) {
-                event.reply('file-created', {
-                    success: false,
-                    error: err.message
-                });
+        // 注意：這裡是 parent process 的記憶體用量，非 child 的準確值
+        const memoryUsage = process.memoryUsage();
+
+        event.reply('execution-result', {
+            success: code === 0,
+            output: stdoutData,
+            error: code !== 0 ? stderrData : null,
+            exitCode: code,
+            execTimeMs: execTimeMs.toFixed(2),
+            memory: {
+                rss: memoryUsage.rss,
+                heapUsed: memoryUsage.heapUsed
             }
-        }
+        });
     });
 });

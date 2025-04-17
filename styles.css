@@ -84,7 +84,7 @@ body {
 }
 
 .tab-title {
-  font-size: x-small;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -128,14 +128,15 @@ body {
 }
 
 .editor-container {
+  padding-top: 1%;
   flex-grow: 3;
   height: 100%;
 }
 
 .console-container {
   flex-grow: 1;
-  min-width: 250px;
-  max-width: 30%;
+  min-width: 500px;
+  max-width: 60%;
   display: flex;
   flex-direction: column;
   border-left: 1px solid var(--border-color);
