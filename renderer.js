@@ -18,7 +18,7 @@ int main(){\n\
 }';
 
 const helloWorld_cpp =
-    '#include <bits/stdc++.h>\n\
+    '#include <iostream>\n\
 using namespace std;\n\
 \n\
 int main(){\n\
@@ -190,9 +190,11 @@ saveFileButton.addEventListener('click', function () {
         const content = editor.getValue();
 
         if (tabInfo.filePath) {
+            // 儲存
             window.fileManager.saveFile(content, tabInfo.filePath);
         }
         else {
+            // 另儲新檔
             window.fileManager.saveFileAs(content);
         }
     }
@@ -204,10 +206,12 @@ window.fileManager.onSaveFileResult((result) => {
         addConsoleMessage(`文件已保存: ${result.path}`, 'success');
 
         if (activeTabId && openTabs.has(activeTabId)) {
+
             const tabInfo = openTabs.get(activeTabId);
-            tabInfo.filePath = result.path;
-            tabInfo.title = path.basename(result.path); // 可選，用於顯示 tab 標題
-            updateTabTitle(activeTabId, tabInfo.title); // 你可自定義這個函式更新 UI
+            tabInfo.filePath = result.path; // 更新 file path
+            tabInfo.filename = result.name; // 更新 file name
+
+            updateTabTitle(activeTabId, tabInfo.filename); // 更新 UI
         }
     }
     else {
@@ -297,4 +301,14 @@ function clearConsole() {
     document.getElementById('console-output').innerHTML = '';
 }
 
+// 更新 tab 標題 --------------------------------------------------------------------------------
+function updateTabTitle(tabId, newTitle) {
 
+    const tabElement = document.getElementById(tabId);
+    if (tabElement) {
+        const titleElement = tabElement.querySelector('.tab-title');
+        if (titleElement) {
+            titleElement.textContent = newTitle;
+        }
+    }
+}

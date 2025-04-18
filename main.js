@@ -4,6 +4,7 @@ const { exec, spawn } = require('child_process');
 
 const iconv = require('iconv-lite');
 const path = require('node:path');
+const pathModule = require('path');
 const fs = require('fs');
 
 
@@ -37,10 +38,9 @@ const createWindow = () => {
     // mainWindow.webContents.openDevTools();
 }
 
-// 这段程序将会在 Electron 结束初始化
-// 和创建浏览器窗口的时候调用
-// 部分 API 在 ready 事件触发后才能使用。
-app.whenReady().then(() => {
+
+
+app.whenReady().then(() => { // 創建瀏覽器視窗時調用
     createWindow();
 
     app.on('activate', () => {
@@ -69,11 +69,12 @@ app.on('window-all-closed', () => {
 ipcMain.on('save-file', (event, { content, path: filePath }) => {
     try {
         fs.writeFileSync(filePath, content);
-        event.reply('file-saved', { success: true, path: filePath });
+        event.reply('file-saved', { success: true, path: filePath, name: pathModule.basename(filePath) });
     }
     catch (err) {
         event.reply('file-saved', { success: false, error: err.message });
     }
+
 });
 
 // 另存新檔
@@ -87,7 +88,7 @@ ipcMain.on('save-file-dialog', async (event, content) => {
     if (!canceled && filePath) {
         try {
             fs.writeFileSync(filePath, content);
-            event.reply('file-saved', { success: true, path: filePath });
+            event.reply('file-saved', { success: true, path: filePath, name: pathModule.basename(filePath) });
         }
         catch (err) {
             event.reply('file-saved', { success: false, error: err.message });
@@ -160,8 +161,13 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
         fs.writeFileSync(sourceFile, code);
     }
 
-    // 執行編譯命令 (根據不同平台可能需要調整)
-    const command = `g++ "${sourceFile}" -o "${outputFile}"`;
+    // 執行編譯命令
+    const mingwGppPath = path.join(__dirname, 'bin', 'mingw64', 'bin', 'g++.exe');
+    fs.writeFileSync(sourceFile, code);
+
+    // 使用 g++ 編譯
+    const command = `"${mingwGppPath}" "${sourceFile}" -o "${outputFile}"`;
+    // const command = `"${mingwGppPath}" "${sourceFile}" -o "${outputFile}"`;
 
     exec(command, { encoding: 'buffer' }, (error, stdout, stderr) => {
         if (error) {

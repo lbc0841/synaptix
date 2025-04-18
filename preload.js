@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+
 // 所有的 Node.js API接口 都可以在 preload 进程中被调用.
 // 它拥有与Chrome扩展一样的沙盒。
 window.addEventListener('DOMContentLoaded', () => {
@@ -31,19 +32,19 @@ contextBridge.exposeInMainWorld('fileManager', {
         ipcRenderer.send('open-file-dialog');
     },
     onOpenFileResult: (callback) => {
-        ipcRenderer.on('file-opened', (_event, result) => {
+        ipcRenderer.on('file-opened', (event, result) => {
             callback(result);
         });
     },
 
-    saveFile: () => {
+    saveFile: (content, path) => {
         ipcRenderer.send('save-file', { content, path });
     },
     saveFileAs: (content) => {
         ipcRenderer.send('save-file-dialog', content);
     },
     onSaveFileResult: (callback) => {
-        ipcRenderer.on('file-saved', (_event, result) => {
+        ipcRenderer.on('file-saved', (event, result) => {
             callback(result);
         });
     }
