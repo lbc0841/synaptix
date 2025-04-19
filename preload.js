@@ -20,11 +20,22 @@ contextBridge.exposeInMainWorld('cppCompiler', {
     compile: (code, filepath) => {
         ipcRenderer.send('compile-cpp', code, filepath);
     },
-    onResult: (callback) => {
-        ipcRenderer.on('compilation-result', (_event, result) => {
+    onCompileResult: (callback) => {
+        ipcRenderer.once('compilation-result', (_event, result) => {
+            callback(result);
+        });
+    },
+
+    run: (code, input, filepath) => {
+        ipcRenderer.send('compile-cpp', code, input, filepath);
+    },
+    onRunResults: (callback) => {
+        ipcRenderer.once('run-result', (_event, result) => {
             callback(result);
         });
     }
+
+
 });
 
 contextBridge.exposeInMainWorld('fileManager', {
@@ -32,7 +43,7 @@ contextBridge.exposeInMainWorld('fileManager', {
         ipcRenderer.send('open-file-dialog');
     },
     onOpenFileResult: (callback) => {
-        ipcRenderer.on('file-opened', (event, result) => {
+        ipcRenderer.once('file-opened', (event, result) => {
             callback(result);
         });
     },
@@ -44,9 +55,14 @@ contextBridge.exposeInMainWorld('fileManager', {
         ipcRenderer.send('save-file-dialog', content);
     },
     onSaveFileResult: (callback) => {
-        ipcRenderer.on('file-saved', (event, result) => {
+        ipcRenderer.once('file-saved', (event, result) => {
             callback(result);
         });
     }
 
+});
+
+
+contextBridge.exposeInMainWorld("cppRunner", {
+    runCode: (code, input, filepath) => ipcRenderer.invoke("run-cpp", code, input, filepath)
 });

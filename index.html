@@ -31,13 +31,19 @@
             <!-- 左側：編輯器 -->
             <div class="editor-container" id="editor-container"></div>
 
-            <!-- 右側：輸出控制台 -->
-            <div class="console-container">
-                <div class="console-header">
-                    <span>控制台輸出</span>
-                    <button id="clear-console">清除</button>
+            <!-- 右側：輸入/輸出 -->
+            <div class="test-case-container">
+                <textarea class="test-case-indata" id="test-case-input" rows="12" cols="50" placeholder="// 輸入測資"></textarea>
+
+                <div class="test-case-outdata">
+                    <div class="test-case-outdata-header">
+                        <span>輸出</span>
+                        <button id="clear-test-case-outdata">清除</button>
+                    </div>
+
+                    <div class="test-case-outdata-content" id="test-case-output"></div>
                 </div>
-                <div class="console-content" id="console-output"></div>
+                
             </div>
         </div>
 

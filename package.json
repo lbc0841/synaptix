@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "iconv-lite": "^0.6.3",
-    "monaco-editor": "^0.52.2"
+    "monaco-editor": "^0.52.2",
+    "pidusage": "^4.0.0"
   }
 }

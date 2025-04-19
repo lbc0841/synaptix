@@ -66,7 +66,8 @@ require(['vs/editor/editor.main'], function () {
     createNewTab('Unnamed.cpp', helloWorld_cpp);
 });
 
-// 創建新標籤頁 --------------------------------------------------------------------------------------------
+// tab ---------------------------------------------------------------------------------------------------
+// 創建新 tab
 function createNewTab(filename, content, filePath = null) {
     const tabId = 'tab-' + Date.now();
     const tabsContainer = document.getElementById('tabs');
@@ -106,7 +107,7 @@ function createNewTab(filename, content, filePath = null) {
     activateTab(tabId);
 }
 
-// 啟用標籤頁 --------------------------------------------------------------------------------------------
+// 啟用 tab
 function activateTab(tabId) {
     // 移除所有標籤頁的活動狀態
     document.querySelectorAll('.tab').forEach(tab => {
@@ -135,7 +136,7 @@ function activateTab(tabId) {
     document.title = openTabs.get(tabId).filename + ' - cpp';
 }
 
-// 關閉標籤頁 --------------------------------------------------------------------------------------------
+// 關閉 tab
 function closeTab(tabId) {
     const tabElement = document.getElementById(tabId);
     const tabInfo = openTabs.get(tabId);
@@ -163,6 +164,36 @@ function closeTab(tabId) {
     openTabs.delete(tabId);
 }
 
+// 更新 tab
+function updateTab(tabId, newTitle) {
+
+    const tabElement = document.getElementById(tabId);
+    if (tabElement) {
+        const titleElement = tabElement.querySelector('.tab-title');
+        if (titleElement) {
+            titleElement.textContent = newTitle;
+        }
+    }
+}
+
+
+// 控制台 ---------------------------------------------------------------------------------
+// 向控制台添加消息
+function addConsoleMessage(message, type = 'info') {
+    const consoleOutput = document.getElementById('test-case-output');
+    const messageElement = document.createElement('div');
+    messageElement.className = type;
+
+
+    messageElement.textContent = message;
+    consoleOutput.appendChild(messageElement);
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+
+// 清空控制台
+function clearConsole() {
+    document.getElementById('test-case-output').innerHTML = '';
+}
 
 
 // 打開文件 --------------------------------------------------------------------------------------------
@@ -182,9 +213,25 @@ window.fileManager.onOpenFileResult((result) => {
     }
 });
 
+
 // 儲存文件 --------------------------------------------------------------------------------------------
+// 點擊儲存按鈕
 const saveFileButton = document.getElementById('save-file-button');
-saveFileButton.addEventListener('click', function () {
+saveFileButton.addEventListener('click', triggerSave);
+
+// ctrl + s
+window.addEventListener('keydown', function (e) {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isSaveShortcut = (isMac && e.metaKey && e.key === 's') || (!isMac && e.ctrlKey && e.key === 's');
+
+    if (isSaveShortcut) {
+        e.preventDefault(); // 阻止預設行為
+        triggerSave();
+    }
+});
+
+// 儲存 | 另儲新檔
+function triggerSave() {
     if (activeTabId && openTabs.has(activeTabId)) {
         const tabInfo = openTabs.get(activeTabId);
         const content = editor.getValue();
@@ -198,7 +245,7 @@ saveFileButton.addEventListener('click', function () {
             window.fileManager.saveFileAs(content);
         }
     }
-});
+}
 
 // 接收文件儲存結果
 window.fileManager.onSaveFileResult((result) => {
@@ -211,7 +258,7 @@ window.fileManager.onSaveFileResult((result) => {
             tabInfo.filePath = result.path; // 更新 file path
             tabInfo.filename = result.name; // 更新 file name
 
-            updateTabTitle(activeTabId, tabInfo.filename); // 更新 UI
+            updateTab(activeTabId, tabInfo.filename); // 更新 UI
         }
     }
     else {
@@ -223,8 +270,9 @@ window.fileManager.onSaveFileResult((result) => {
 // 編譯代碼 --------------------------------------------------------------------------------------------
 const compileButton = document.getElementById('compile-button');
 compileButton.addEventListener('click', function () {
+    console.log(`asiuagoiug`);
     if (activeTabId && openTabs.has(activeTabId)) {
-        const content = editor.getValue();
+        const code = editor.getValue();
         const filePath = openTabs.get(activeTabId).filePath;
 
         clearConsole();
@@ -232,48 +280,46 @@ compileButton.addEventListener('click', function () {
         // 顯示編譯中訊息
         addConsoleMessage('正在編譯...', 'info');
 
-        window.cppCompiler.compile('compile-cpp', content, null);
+        window.cppCompiler.compile(code, filePath);
     }
 });
 
 // 接收編譯結果
-window.cppCompiler.onResult((result) => {
+window.cppCompiler.onCompileResult((result) => {
     if (result.success) {
-        // console.log('編譯成功，執行檔路徑:', result.executablePath);
         addConsoleMessage('編譯成功');
     } else {
-        // console.error('編譯失敗:', result.error);
         addConsoleMessage('Error : ' + result.error, 'error');
     }
 });
 
 
 // 運行代碼 --------------------------------------------------------------------------------------------
-// 存儲最後一次編譯成功的可執行文件路徑
-let lastExecutablePath = null;
+let executablePath = null; // 存儲可執行文件路徑
 const runButton = document.getElementById('run-button');
+const testCaseTextarea = document.getElementById("test-case-input")
 runButton.addEventListener('click', function () {
-    if (lastExecutablePath) {
-        addConsoleMessage('正在運行程序...', 'info');
-        // window.electronAPI.send('run-executable', lastExecutablePath);
-    } else {
-        addConsoleMessage('請先編譯程序', 'error');
-    }
-});
 
-// 清空控制台 --------------------------------------------------------------------------------------------
-const clearConsoleButton = document.getElementById('clear-console');
-clearConsoleButton.addEventListener('click', function () {
     clearConsole();
+
+    const input = testCaseTextarea.value;
+    const code = editor.getValue();
+    const filePath = openTabs.get(activeTabId).filePath;
+
+    cppRunner.runCode(code, input, filePath)
+    .then(result => {
+        if (result.status == 'success') {
+            addConsoleMessage(`${result.stdout}`, 'info');
+            addConsoleMessage(`(${result.timeMs} ms, ${result.memoryKb} KB)`, 'success');
+        }
+        else {
+            addConsoleMessage(`執行錯誤：${result.stderr}`, 'error');
+        }
+    })
+    .catch(err => {
+        addConsoleMessage('invoke 層級錯誤', 'info');
+    });
 });
-
-// 新增分頁 ----------------------------------------------------------------------------------------------
-const newTabButton = document.getElementById('new-tab');
-newTabButton.addEventListener('click', function () {
-    createNewTab('Unnamed.cpp', helloWorld_cpp);
-});
-
-
 
 // 接收執行結果
 window.electronAPI.on('execution-result', (event, result) => {
@@ -284,31 +330,17 @@ window.electronAPI.on('execution-result', (event, result) => {
     }
 });
 
-// 向控制台添加消息 ---------------------------------------------------------------------------
-function addConsoleMessage(message, type = 'info') {
-    const consoleOutput = document.getElementById('console-output');
-    const messageElement = document.createElement('div');
-    messageElement.className = type;
+
+// 清空控制台 --------------------------------------------------------------------------------------------
+const clearConsoleButton = document.getElementById('clear-test-case-outdata');
+clearConsoleButton.addEventListener('click', function () {
+    clearConsole();
+});
 
 
-    messageElement.textContent = message;
-    consoleOutput.appendChild(messageElement);
-    consoleOutput.scrollTop = consoleOutput.scrollHeight;
-}
+// 新增分頁 ----------------------------------------------------------------------------------------------
+const newTabButton = document.getElementById('new-tab');
+newTabButton.addEventListener('click', function () {
+    createNewTab('Unnamed.cpp', helloWorld_cpp);
+});
 
-// 清空控制台 --------------------------------------------------------------------------------
-function clearConsole() {
-    document.getElementById('console-output').innerHTML = '';
-}
-
-// 更新 tab 標題 --------------------------------------------------------------------------------
-function updateTabTitle(tabId, newTitle) {
-
-    const tabElement = document.getElementById(tabId);
-    if (tabElement) {
-        const titleElement = tabElement.querySelector('.tab-title');
-        if (titleElement) {
-            titleElement.textContent = newTitle;
-        }
-    }
-}

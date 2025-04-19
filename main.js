@@ -7,7 +7,10 @@ const path = require('node:path');
 const pathModule = require('path');
 const fs = require('fs');
 
+const { runCppCode } = require("./runCppCode");
 
+
+let mainWindow;
 const createWindow = () => {
     // 建立瀏覽器視窗
     mainWindow = new BrowserWindow({
@@ -42,6 +45,14 @@ const createWindow = () => {
 
 app.whenReady().then(() => { // 創建瀏覽器視窗時調用
     createWindow();
+
+    ipcMain.handle("run-cpp", async (event, code, inputData, filePath) => {
+        return new Promise((resolve) => {
+            runCppCode(code, inputData, filePath, (result) => {
+                resolve(result);
+            });
+        });
+    });
 
     app.on('activate', () => {
         // 在 macOS 系统内, 如果没有已开启的应用窗口
@@ -126,7 +137,7 @@ ipcMain.on('open-file-dialog', (event) => {
                 });
             }
         }
-        else{
+        else {
             // 取消開啟檔案
         }
     }).catch(err => {
@@ -140,7 +151,7 @@ ipcMain.on('open-file-dialog', (event) => {
 // 編譯代碼 --------------------------------------------------------------------------------------------
 ipcMain.on('compile-cpp', (event, code, filepath) => {
 
-    const tempDir = path.join(app.getPath('temp'), 'cpp-editor');
+    const tempDir = path.join(app.getPath('temp'), 'synaptix');
     if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
     }
@@ -158,16 +169,17 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
     else {
         sourceFile = path.join(tempDir, 'temp.cpp');
         outputFile = path.join(tempDir, 'temp');
+
         fs.writeFileSync(sourceFile, code);
     }
 
-    // 執行編譯命令
-    const mingwGppPath = path.join(__dirname, 'bin', 'mingw64', 'bin', 'g++.exe');
-    fs.writeFileSync(sourceFile, code);
+    console.log(`compile-cpp ${sourceFile}`);
+
+    // 編譯命令
+    const gpp = path.join(__dirname, 'bin', 'mingw64', 'bin', 'g++.exe');
 
     // 使用 g++ 編譯
-    const command = `"${mingwGppPath}" "${sourceFile}" -o "${outputFile}"`;
-    // const command = `"${mingwGppPath}" "${sourceFile}" -o "${outputFile}"`;
+    const command = `"${gpp}" "${sourceFile}" -o "${outputFile}"`;
 
     exec(command, { encoding: 'buffer' }, (error, stdout, stderr) => {
         if (error) {
@@ -180,7 +192,7 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
             else {
                 decodedError = stderr.toString('utf-8');  // Linux/macOS 預設為 UTF-8
             }
-            
+
             event.reply('compilation-result', {
                 success: false,
                 error: decodedError
@@ -194,46 +206,5 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
                 executablePath: outputFile
             });
         }
-    });
-});
-
-// 運行代碼 --------------------------------------------------------------------------------------------
-ipcMain.on('run-executable', (event, executablePath) => {
-    const start = process.hrtime();  // 高精度時間測量
-
-    const child = spawn(executablePath);
-
-    let stdoutData = '';
-    let stderrData = '';
-
-    child.stdin.write(inputData || '');
-    child.stdin.end();
-
-    child.stdout.on('data', (data) => {
-        stdoutData += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-        stderrData += data.toString();
-    });
-
-    child.on('close', (code) => {
-        const end = process.hrtime(start);
-        const execTimeMs = end[0] * 1000 + end[1] / 1e6; // 轉換為毫秒
-
-        // 注意：這裡是 parent process 的記憶體用量，非 child 的準確值
-        const memoryUsage = process.memoryUsage();
-
-        event.reply('execution-result', {
-            success: code === 0,
-            output: stdoutData,
-            error: code !== 0 ? stderrData : null,
-            exitCode: code,
-            execTimeMs: execTimeMs.toFixed(2),
-            memory: {
-                rss: memoryUsage.rss,
-                heapUsed: memoryUsage.heapUsed
-            }
-        });
     });
 });

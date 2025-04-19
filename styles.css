@@ -6,7 +6,7 @@
   --border-color: #333333;
   --tab-active-color: #1e1e1e;
   --tab-inactive-color: #2d2d2d;
-  --status-bar-color: #007acc;
+  --status-bar-color: #007acca9;
   --console-bg: #1e1e1e;
   --console-text: #d4d4d4;
   --console-error: #f48771;
@@ -133,6 +133,7 @@ body {
   height: 100%;
 }
 
+/* 測資 輸入/輸出 */
 .console-container {
   flex-grow: 1;
   min-width: 500px;
@@ -143,8 +144,39 @@ body {
   background-color: var(--console-bg);
 }
 
-.console-header {
+/* 測資輸入 */
+.test-case-indata {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border: 2px solid #333333;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  width: 100%;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+.test-case-indata:focus {
+  border-color: #81d4fa;
+  box-shadow: 0 0 5px #4fc3f7;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+/* 測資輸出 */
+.test-case-outdata{
+  border: 2px solid #333333;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.test-case-outdata-header {
   padding: 5px 10px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
   background-color: var(--panel-color);
   display: flex;
   justify-content: space-between;
@@ -152,7 +184,7 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
-#clear-console {
+#clear-test-case-outdata {
   padding: 2px 8px;
   background-color: transparent;
   border: 1px solid var(--border-color);
@@ -161,11 +193,11 @@ body {
   border-radius: 3px;
 }
 
-#clear-console:hover {
+#clear-test-case-outdata:hover {
   background-color: var(--menu-hover);
 }
 
-.console-content {
+.test-case-outdata-content {
   padding: 10px;
   height: 100%;
   overflow-y: auto;
@@ -174,13 +206,15 @@ body {
   word-break: break-all;
 }
 
-.console-content .error {
+.test-case-outdata-content .error {
   color: var(--console-error);
 }
 
-.console-content .success {
+.test-case-outdata-content .success {
   color: #6a9955;
 }
+
+
 
 /* 底部狀態欄 */
 .status-bar {
