@@ -3,6 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const { exec, spawn } = require("child_process");
 const os = require("os");
+const pidusage = require("pidusage");
+const { memoryUsage } = require('process');
 
 function runCppCode(code, inputData, filepath, callback) {
 
@@ -14,6 +16,7 @@ function runCppCode(code, inputData, filepath, callback) {
     let sourceFile;
     let outputFile;
 
+    // 判斷是 暫存檔案 還是 使用者的檔案
     if (filepath) {
         sourceFile = filepath;
         outputFile = path.join(
@@ -28,13 +31,13 @@ function runCppCode(code, inputData, filepath, callback) {
         fs.writeFileSync(sourceFile, code);
     }
 
-    console.log("runCppCode");
+    console.log("runCppCode-run");
 
     // 編譯命令
     const gpp = path.join(__dirname, 'bin', 'mingw64', 'bin', 'g++.exe');
 
     // 使用 g++ 編譯
-    const command = `"${gpp}" "${sourceFile}" -o "${outputFile}"`;
+    const command = `"${gpp}" "${sourceFile}" -o "${outputFile}" -O2 -std=c++14`;
 
 
     let responded = false;
@@ -46,6 +49,7 @@ function runCppCode(code, inputData, filepath, callback) {
     }
 
     exec(command, (compileErr, stdout, stderr) => {
+        // 編譯錯誤
         if (compileErr) {
 
             safeCallback({
@@ -57,66 +61,73 @@ function runCppCode(code, inputData, filepath, callback) {
             return;
         }
 
-        const getMemoryUsageKb = (pid, cb) => {
-            exec(`tasklist /FI "PID eq ${pid}" /FO LIST`, (err, stdout) => {
-                if (err || !stdout) return cb(null);
-                const match = stdout.match(/Mem Usage:\s*([\d,]+) K/i);
-                if (!match) return cb(null);
-                cb(parseInt(match[1].replace(/,/g, ''), 10));
-            });
-        };
-
-        const startTime = process.hrtime();
+        // const startCpuTime = process.cpuUsage();
         const proc = spawn(outputFile);
         const pid = proc.pid;
 
         let stdoutData = "";
         let stderrData = "";
+        let memoryUsage = 0;
+        let cpuTimeMs = 0;
 
-        // 查詢記憶體佔用 (提早做)
-        // let memoryUsage = null;
-        // getMemoryUsageKb(pid, (mem) => memoryUsage = mem);
+        // 查詢 時間 & 記憶體
+        let isProcessAlive = true;
+        const memoryTimer = setInterval(() => {
+            if (!isProcessAlive) {
+                clearInterval(memoryTimer);
+                return;
+            }
 
+            pidusage(pid).then(stat => {
+                const currentMem = Math.round(stat.memory / 1024);
+                if (currentMem > memoryUsage) memoryUsage = currentMem;
+
+                cpuTimeMs = stat.ctime; // 持續更新最後一次可取得的 CPU 時間（ms）
+            })
+            .catch((err) => {
+                if (err && err.code === 'ENOENT') {
+                    isProcessAlive = false;
+                    console.error("pidusage error:", err);
+                }
+                else {
+                    console.error("pidusage error:", err);
+                }
+            });
+        }, 0.2);
+
+        // 輸入
         proc.stdin.write(inputData);
         proc.stdin.end();
 
         proc.stdout.on("data", data => stdoutData += data.toString());
         proc.stderr.on("data", data => stderrData += data.toString());
 
-        const getMemoryUsageKbRetry = (pid, retries = 3, delayMs = 100, cb) => {
-            let attempts = 0;
-            const tryGet = () => {
-                exec(`tasklist /FI "PID eq ${pid}" /FO LIST`, (err, stdout) => {
-                    const match = stdout?.match(/Mem Usage:\s*([\d,]+) K/i);
-                    if (!err && match) {
-                        cb(parseInt(match[1].replace(/,/g, ''), 10));
-                    } else if (++attempts >= retries) {
-                        cb(null);
-                    } else {
-                        setTimeout(tryGet, delayMs);
-                    }
-                });
-            };
-            tryGet();
-        };
 
-        proc.on("close", (code) => {
-            const [sec, nano] = process.hrtime(startTime);
-            const durationMs = (sec * 1000 + nano / 1e6).toFixed(2);
+        proc.on("close", async (code) => {
+            clearInterval(memoryTimer);
+            pidusage.clear();
+            // const cpuDiff = process.cpuUsage(startCpuTime);
+            // const durationMs = ((cpuDiff.user + cpuDiff.system) / 1000).toFixed(2); // 單位轉為毫秒
 
-            getMemoryUsageKbRetry(pid, 3, 5, (mem) => {
-                safeCallback({
-                    status: code === 0 ? "success" : "runtime_error",
-                    stdout: stdoutData,
-                    stderr: stderrData,
-                    exitCode: code,
-                    timeMs: parseFloat(durationMs),
-                    memoryKb: mem
-                });
+            safeCallback({
+                status: code === 0 ? "success" : "runtime_error",
+                stdout: stdoutData,
+                stderr: stderrData,
+                exitCode: code,
+                timeMs: cpuTimeMs,          // ← 這是 C++ 子程序真正使用的 CPU 時間
+                memoryKb: memoryUsage
             });
+
+
         });
 
+        // 超時 (10s)
+        const timeoutMillis = 10000;
         setTimeout(() => {
+
+            clearInterval(memoryTimer);
+            pidusage.clear();
+
             safeCallback({
                 status: "timeout",
                 stdout: stdoutData,
@@ -125,7 +136,7 @@ function runCppCode(code, inputData, filepath, callback) {
                 timeMs: null,
                 memoryKb: null
             });
-        }, 2000);
+        }, timeoutMillis);
     });
 }
 

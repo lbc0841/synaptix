@@ -38,7 +38,8 @@ const helloWorld_java =
 
 
 
-// Monaco 編輯器初始化 ------------------------------------------------------------------------------------
+// Monaco --------------------------------------------------------------------------------------------
+// 初始化
 require.config({ paths: { 'vs': './node_modules/monaco-editor/min/vs' } });
 require(['vs/editor/editor.main'], function () {
     // 創建編輯器實例
@@ -50,10 +51,12 @@ require(['vs/editor/editor.main'], function () {
             enabled: true
         },
         scrollBeyondLastLine: false,
-        roundedSelection: false,
+        roundedSelection: true,
         renderIndentGuides: true,
         lineNumbers: 'on',
-        folding: true
+        folding: true,
+
+        fontSize: 18,
     });
 
     // 監聽光標位置變化，更新狀態欄
@@ -178,6 +181,8 @@ function updateTab(tabId, newTitle) {
 
 
 // 控制台 ---------------------------------------------------------------------------------
+const consoleOutput = document.getElementById('test-case-output');
+const messageElement = document.createElement('div');
 // 向控制台添加消息
 function addConsoleMessage(message, type = 'info') {
     const consoleOutput = document.getElementById('test-case-output');
@@ -230,7 +235,7 @@ window.addEventListener('keydown', function (e) {
     }
 });
 
-// 儲存 | 另儲新檔
+// 儲存 / 另儲新檔
 function triggerSave() {
     if (activeTabId && openTabs.has(activeTabId)) {
         const tabInfo = openTabs.get(activeTabId);
@@ -295,7 +300,6 @@ window.cppCompiler.onCompileResult((result) => {
 
 
 // 運行代碼 --------------------------------------------------------------------------------------------
-let executablePath = null; // 存儲可執行文件路徑
 const runButton = document.getElementById('run-button');
 const testCaseTextarea = document.getElementById("test-case-input")
 runButton.addEventListener('click', function () {
@@ -321,20 +325,12 @@ runButton.addEventListener('click', function () {
     });
 });
 
-// 接收執行結果
-window.electronAPI.on('execution-result', (event, result) => {
-    if (result.success) {
-        addConsoleMessage('程序輸出:\n' + result.output, 'output');
-    } else {
-        addConsoleMessage('執行錯誤:\n' + result.error, 'error');
-    }
-});
-
 
 // 清空控制台 --------------------------------------------------------------------------------------------
 const clearConsoleButton = document.getElementById('clear-test-case-outdata');
 clearConsoleButton.addEventListener('click', function () {
-    clearConsole();
+    addConsoleMessage('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n ', 'info');
+    // clearConsole();
 });
 
 

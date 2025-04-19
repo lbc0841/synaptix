@@ -3,7 +3,7 @@
   --text-color: #d4d4d4;
   --accent-color: #0078d7;
   --panel-color: #252526;
-  --border-color: #333333;
+  --border-color: #505050;
   --tab-active-color: #1e1e1e;
   --tab-inactive-color: #2d2d2d;
   --status-bar-color: #007acca9;
@@ -31,14 +31,16 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background-color: #2d2d2d;
 }
 
 /* 頂部菜單欄 */
 .menu-bar {
   display: flex;
-  background-color: var(--panel-color);
+  background-color: #2d2d2d;
   padding: 5px 10px;
   border-bottom: 1px solid var(--border-color);
+  margin-bottom: 6px;
 }
 
 .menu-item {
@@ -56,7 +58,6 @@ body {
 .tabs-container {
   display: flex;
   background-color: var(--tab-inactive-color);
-  border-bottom: 1px solid var(--border-color);
 }
 
 .tabs {
@@ -69,13 +70,19 @@ body {
 .tab {
   padding: 8px 20px;
   cursor: pointer;
+
   background-color: var(--tab-inactive-color);
   border-right: 1px solid var(--border-color);
+
   position: relative;
   display: flex;
   align-items: center;
-  min-width: 150px;
+  min-width: 120px;
   max-width: 200px;
+
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+  border-top: 1px solid var(--border-color);
 }
 
 .tab.active {
@@ -120,35 +127,43 @@ body {
   background-color: var(--menu-hover);
 }
 
-/* 主要內容區域 */
+/* 主要內容區 */
 .main-content {
   display: flex;
   flex-grow: 1;
   overflow: hidden;
+  /* background-color: #; */
 }
 
+/* 代碼編輯區 */
 .editor-container {
-  padding-top: 1%;
+  padding: 2px;
   flex-grow: 3;
   height: 100%;
+  border-top: 2px solid var(--border-color);
 }
 
-/* 測資 輸入/輸出 */
-.console-container {
+/* 輸入/輸出 區 */
+.test-case-container {
   flex-grow: 1;
+  height: 100%;
+
+  display: grid;
+  grid-template-rows: auto auto 1fr; /* 輸入框、自訂間距、輸出區塊 */
+
   min-width: 500px;
   max-width: 60%;
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid var(--border-color);
-  background-color: var(--console-bg);
+
+  background-color: #2d2d2d;
 }
 
 /* 測資輸入 */
 .test-case-indata {
+  min-height: 50px;
+  max-height: 72vh;
   background-color: #1e1e1e;
   color: #ffffff;
-  border: 2px solid #333333;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   padding: 10px;
   font-size: 14px;
@@ -168,9 +183,11 @@ body {
 
 /* 測資輸出 */
 .test-case-outdata{
-  border: 2px solid #333333;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
-  resize: vertical;
+
+  overflow: hidden;
+  margin-bottom: 6px;
 }
 
 .test-case-outdata-header {
@@ -199,11 +216,15 @@ body {
 
 .test-case-outdata-content {
   padding: 10px;
-  height: 100%;
-  overflow-y: auto;
+  height: 90%;
+
+  margin-bottom: 1000px;
+  overflow: auto;
   font-family: 'Consolas', 'Source Code Pro', monospace;
   white-space: pre-wrap;
   word-break: break-all;
+
+  background-color: #1e1e1e;
 }
 
 .test-case-outdata-content .error {
@@ -213,7 +234,6 @@ body {
 .test-case-outdata-content .success {
   color: #6a9955;
 }
-
 
 
 /* 底部狀態欄 */
@@ -230,7 +250,7 @@ body {
 
 /* Monaco Editor 樣式調整 */
 .monaco-editor .margin {
-  background-color: var(--bg-color) !important;
+  background-color: #2d2d2d;
 }
 
 /* 可選的滾動條樣式 */
