@@ -206,9 +206,17 @@ function addConsoleMessage(message, type = 'info') {
 }
 
 // 清空控制台
+const clearConsoleButton = document.getElementById('clear-test-case-outdata');
+clearConsoleButton.addEventListener('click', function () {
+    // addConsoleMessage('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n', 'info');
+    clearConsole();
+});
+
 function clearConsole() {
     document.getElementById('test-case-output').innerHTML = '';
 }
+
+
 
 
 // 打開文件 --------------------------------------------------------------------------------------------
@@ -336,14 +344,6 @@ runButton.addEventListener('click', function () {
             hideLoadingSpinner();
             addConsoleMessage('invoke error', 'info');
         });
-});
-
-
-// 清空控制台 --------------------------------------------------------------------------------------------
-const clearConsoleButton = document.getElementById('clear-test-case-outdata');
-clearConsoleButton.addEventListener('click', function () {
-    addConsoleMessage('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n', 'info');
-    // clearConsole();
 });
 
 
