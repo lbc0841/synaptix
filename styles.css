@@ -1,16 +1,22 @@
 :root {
-  --bg-color: #1e1e1e;
+  --bg-color: #101010;
   --text-color: #d4d4d4;
   --accent-color: #0078d7;
   --panel-color: #252526;
-  --border-color: #505050;
-  --tab-active-color: #1e1e1e;
-  --tab-inactive-color: #2d2d2d;
+  --border-color: #303030;
+
+  --tab-active-color: #242424;
+  --tab-inactive-color: #111111;
+
+  --block-color: #232323;
+
   --status-bar-color: #007acca9;
   --console-bg: #1e1e1e;
   --console-text: #d4d4d4;
   --console-error: #f48771;
   --menu-hover: #2a2d2e;
+
+  --notification-color: #404040;
 }
 
 * {
@@ -31,13 +37,13 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #2d2d2d;
+  background-color: var(--bg-color);
 }
 
 /* 頂部菜單欄 */
 .menu-bar {
   display: flex;
-  background-color: #2d2d2d;
+  background-color: var(--bg-color);
   padding: 5px 10px;
   border-bottom: 1px solid var(--border-color);
   margin-bottom: 6px;
@@ -57,7 +63,7 @@ body {
 /* 分頁欄 */
 .tabs-container {
   display: flex;
-  background-color: var(--tab-inactive-color);
+  background-color: var(--bg-color);
 }
 
 .tabs {
@@ -72,7 +78,6 @@ body {
   cursor: pointer;
 
   background-color: var(--tab-inactive-color);
-  border-right: 1px solid var(--border-color);
 
   position: relative;
   display: flex;
@@ -106,15 +111,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .tab-close:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.new-tab {
+.new-tab-button {
   padding: 8px 15px;
+
+  height: 88%;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -123,7 +130,7 @@ body {
   border-left: 1px solid var(--border-color);
 }
 
-.new-tab:hover {
+.new-tab-button:hover {
   background-color: var(--menu-hover);
 }
 
@@ -132,12 +139,13 @@ body {
   display: flex;
   flex-grow: 1;
   overflow: hidden;
-  /* background-color: #; */
+  /* background-color: #ffffff; */
 }
 
 /* 代碼編輯區 */
 .editor-container {
   padding: 2px;
+  padding-bottom: 6px;
   flex-grow: 3;
   height: 100%;
   border-top: 2px solid var(--border-color);
@@ -154,14 +162,15 @@ body {
   min-width: 500px;
   max-width: 60%;
 
-  background-color: #2d2d2d;
+  margin-left: 6px;
+  background-color: var(--bg-color);
 }
 
 /* 測資輸入 */
 .test-case-indata {
   min-height: 50px;
   max-height: 72vh;
-  background-color: #1e1e1e;
+  background-color: var(--block-color);
   color: #ffffff;
   border: 2px solid var(--border-color);
   border-radius: 8px;
@@ -171,14 +180,12 @@ body {
   resize: vertical;
   outline: none;
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  margin-top: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .test-case-indata:focus {
   border-color: #81d4fa;
   box-shadow: 0 0 5px #4fc3f7;
-  margin-top: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 /* 測資輸出 */
@@ -188,6 +195,7 @@ body {
 
   overflow: hidden;
   margin-bottom: 6px;
+  background-color: var(--block-color);
 }
 
 .test-case-outdata-header {
@@ -224,7 +232,7 @@ body {
   white-space: pre-wrap;
   word-break: break-all;
 
-  background-color: #1e1e1e;
+  background-color: var(--block-color);
 }
 
 .test-case-outdata-content .error {
@@ -260,7 +268,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-color);
+  background: var(--block-color);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -270,4 +278,53 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #777;
+}
+
+/* 底部通知欄 */
+.bottom-notification {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  height: 50px;
+  width: 240px;
+  min-width: 200px;
+  max-width: 500px;
+  z-index: 9999;
+  background-color: var(--notification-color);
+
+  border: 4px solid rgba(0, 0, 0, 0);
+  border-radius: 12px;
+}
+
+.notification-text{
+  margin-top: 2px;
+  padding: 2px 10px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* loading 動畫 */
+.spinner {
+  margin-left: 18px;
+  margin-top: 6px;
+  z-index: 9999;
+  width: 32px;
+  height: 32px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 動畫定義 */
+@keyframes spin {
+  0% { transform: translateX(-50%) rotate(0deg); }
+  100% { transform: translateX(-50%) rotate(360deg); }
 }

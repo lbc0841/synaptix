@@ -208,3 +208,9 @@ ipcMain.on('compile-cpp', (event, code, filepath) => {
         }
     });
 });
+
+// message-box --------------------------------------------------------------------------------------------
+ipcMain.handle('show-message-box', async (_, options) => {
+    const result = await dialog.showMessageBox(BrowserWindow.getFocusedWindow(), options);
+    return result;
+});

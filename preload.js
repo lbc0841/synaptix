@@ -66,3 +66,16 @@ contextBridge.exposeInMainWorld('fileManager', {
 contextBridge.exposeInMainWorld("cppRunner", {
     runCode: (code, input, filepath) => ipcRenderer.invoke("run-cpp", code, input, filepath)
 });
+
+
+
+contextBridge.exposeInMainWorld("messageManager", {
+    showMessageBox: (type, buttons, title, message) => ipcRenderer.invoke('show-message-box', {
+        type,
+        buttons,
+        title,
+        message,
+    }).then(result => {
+        console.log('使用者點擊了按鈕索引：', result.response);
+    })
+});

@@ -1,8 +1,8 @@
 const { app } = require('electron');
-const fs = require("fs");
 const path = require("path");
 const { exec, spawn } = require("child_process");
 const os = require("os");
+const fs = require("fs");
 const pidusage = require("pidusage");
 const { memoryUsage } = require('process');
 
@@ -28,6 +28,8 @@ function runCppCode(code, inputData, filepath, callback) {
         sourceFile = path.join(tempDir, 'temp.cpp');
         outputFile = path.join(tempDir, 'temp');
 
+        // 插入時間統計邏輯
+        // const instrumentedCode = instrumentMainFunction(code);
         fs.writeFileSync(sourceFile, code);
     }
 
@@ -61,7 +63,6 @@ function runCppCode(code, inputData, filepath, callback) {
             return;
         }
 
-        // const startCpuTime = process.cpuUsage();
         const proc = spawn(outputFile);
         const pid = proc.pid;
 
@@ -70,30 +71,6 @@ function runCppCode(code, inputData, filepath, callback) {
         let memoryUsage = 0;
         let cpuTimeMs = 0;
 
-        // 查詢 時間 & 記憶體
-        let isProcessAlive = true;
-        const memoryTimer = setInterval(() => {
-            if (!isProcessAlive) {
-                clearInterval(memoryTimer);
-                return;
-            }
-
-            pidusage(pid).then(stat => {
-                const currentMem = Math.round(stat.memory / 1024);
-                if (currentMem > memoryUsage) memoryUsage = currentMem;
-
-                cpuTimeMs = stat.ctime; // 持續更新最後一次可取得的 CPU 時間（ms）
-            })
-            .catch((err) => {
-                if (err && err.code === 'ENOENT') {
-                    isProcessAlive = false;
-                    console.error("pidusage error:", err);
-                }
-                else {
-                    console.error("pidusage error:", err);
-                }
-            });
-        }, 0.2);
 
         // 輸入
         proc.stdin.write(inputData);
@@ -104,29 +81,20 @@ function runCppCode(code, inputData, filepath, callback) {
 
 
         proc.on("close", async (code) => {
-            clearInterval(memoryTimer);
-            pidusage.clear();
-            // const cpuDiff = process.cpuUsage(startCpuTime);
-            // const durationMs = ((cpuDiff.user + cpuDiff.system) / 1000).toFixed(2); // 單位轉為毫秒
 
             safeCallback({
                 status: code === 0 ? "success" : "runtime_error",
                 stdout: stdoutData,
                 stderr: stderrData,
                 exitCode: code,
-                timeMs: cpuTimeMs,          // ← 這是 C++ 子程序真正使用的 CPU 時間
+                timeMs: cpuTimeMs,
                 memoryKb: memoryUsage
             });
-
-
         });
 
         // 超時 (10s)
         const timeoutMillis = 10000;
         setTimeout(() => {
-
-            clearInterval(memoryTimer);
-            pidusage.clear();
 
             safeCallback({
                 status: "timeout",
@@ -139,5 +107,54 @@ function runCppCode(code, inputData, filepath, callback) {
         }, timeoutMillis);
     });
 }
+/*
+// 在 user 的代碼裡偷偷插入計算 時間&記憶體 的代碼
+function instrumentMainFunction(code) {
+    const lines = code.split('\n');
+    let inMain = false;
+    let braceCount = 0;
+    let output = [];
+    let insertedHeader = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // 插入 #include <ctime>（若原碼未自行引入）
+        if (!insertedHeader && line.match(/#include\s+<.*>/)) {
+            output.push(line);
+            if (!code.includes('#include <ctime>')) {
+                output.push('#include <ctime>');
+            }
+            insertedHeader = true;
+            continue;
+        }
+
+        // 找到 main() 開頭
+        if (!inMain && line.match(/\bint\s+main\s*\([^)]*\)\s*\{/)) {
+            inMain = true;
+            braceCount = 1;
+            output.push(line);
+            output.push('    std::clock_t __start = std::clock();');
+            continue;
+        }
+
+        // 在 main() 的結尾 return 前插入結束時間
+        if (inMain) {
+            braceCount += (line.match(/{/g) || []).length;
+            braceCount -= (line.match(/}/g) || []).length;
+
+            // 找到 return
+            if (line.match(/\breturn\b.*;/)) {
+                output.push('    std::clock_t __end = std::clock();');
+                output.push('    std::cout << "\\n[CPU Time] " << 1000.0 * (__end - __start) / CLOCKS_PER_SEC << " ms" << std::endl;');
+            }
+        }
+
+        output.push(line);
+    }
+
+    return output.join('\n');
+}
+*/
 
 module.exports = { runCppCode };

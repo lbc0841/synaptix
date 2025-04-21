@@ -136,7 +136,7 @@ function activateTab(tabId) {
     editor.setValue(openTabs.get(tabId).content);
 
     // 更新窗口標題
-    document.title = openTabs.get(tabId).filename + ' - cpp';
+    document.title = 'synaptix - ' + openTabs.get(tabId).filename;
 }
 
 // 關閉 tab
@@ -155,16 +155,26 @@ function closeTab(tabId) {
             if (nextTab) {
                 activateTab(nextTab.id);
             }
+
+            tabElement.remove();
+            openTabs.delete(tabId);
         }
         else {
-            // 如果沒有標籤頁，創建一個新的標籤頁
-            createNewTab('Unnamed.cpp', helloWorld_cpp);
+            // 如果只有一個 tab
+            window.messageManager.showMessageBox(
+                'warning',
+                ['Yes'],
+                '-_-',
+                '你把分頁全關了就沒辦法 摳頂 了  :('
+            );
+
+            
         }
     }
 
     // 移除標籤頁元素和數據
-    tabElement.remove();
-    openTabs.delete(tabId);
+    // tabElement.remove();
+    // openTabs.delete(tabId);
 }
 
 // 更新 tab
@@ -305,38 +315,49 @@ const testCaseTextarea = document.getElementById("test-case-input")
 runButton.addEventListener('click', function () {
 
     clearConsole();
+    showLoadingSpinner();
 
     const input = testCaseTextarea.value;
     const code = editor.getValue();
     const filePath = openTabs.get(activeTabId).filePath;
 
     cppRunner.runCode(code, input, filePath)
-    .then(result => {
-        if (result.status == 'success') {
-            addConsoleMessage(`${result.stdout}`, 'info');
-            addConsoleMessage(`(${result.timeMs} ms, ${result.memoryKb} KB)`, 'success');
-        }
-        else {
-            addConsoleMessage(`執行錯誤：${result.stderr}`, 'error');
-        }
-    })
-    .catch(err => {
-        addConsoleMessage('invoke 層級錯誤', 'info');
-    });
+        .then(result => {
+            hideLoadingSpinner();
+            if (result.status == 'success') {
+                addConsoleMessage(`${result.stdout}`, 'info');
+                // addConsoleMessage(`(${result.timeMs} ms, ${result.memoryKb} KB)`, 'success');
+            }
+            else {
+                addConsoleMessage(`執行錯誤：${result.stderr}`, 'error');
+            }
+        })
+        .catch(err => {
+            hideLoadingSpinner();
+            addConsoleMessage('invoke error', 'info');
+        });
 });
 
 
 // 清空控制台 --------------------------------------------------------------------------------------------
 const clearConsoleButton = document.getElementById('clear-test-case-outdata');
 clearConsoleButton.addEventListener('click', function () {
-    addConsoleMessage('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n ', 'info');
+    addConsoleMessage('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n', 'info');
     // clearConsole();
 });
 
 
 // 新增分頁 ----------------------------------------------------------------------------------------------
-const newTabButton = document.getElementById('new-tab');
+const newTabButton = document.getElementById('new-tab-button');
 newTabButton.addEventListener('click', function () {
     createNewTab('Unnamed.cpp', helloWorld_cpp);
 });
 
+// 顯示/隱藏 loding --------------------------------------------------------------------------------------
+function showLoadingSpinner() {
+    document.getElementById('bottom-notification').style.display = 'flex';
+}
+
+function hideLoadingSpinner() {
+    document.getElementById('bottom-notification').style.display = 'none';
+}

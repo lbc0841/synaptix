@@ -23,7 +23,7 @@
             <div class="tabs" id="tabs">
                 <!-- 分頁將在這裡動態生成 -->
             </div>
-            <div class="new-tab" id="new-tab">+</div>
+            <div class="new-tab-button" id="new-tab-button">+</div>
         </div>
 
         <!-- 主要內容區域 -->
@@ -42,7 +42,7 @@
                     </div>
 
                     <div class="test-case-outdata-content" id="test-case-output"></div>
-                    <div style="height: 100vh;"></div>
+                    <!-- <div style="height: 100vh; background-color: 101010;"></div> -->
                 </div>
                 
             </div>
@@ -54,6 +54,12 @@
             <div class="status-item" id="file-type">C++</div>
         </div>
     </div>
+
+    <div id="bottom-notification" class="bottom-notification" style="display: none;">
+        <div id="loading-spinner" class="spinner"></div>
+        <div id="notification-text" class="notification-text">Compiling</div>
+    </div>
+    
 
     <script src="./renderer.js"></script>
 </body>
