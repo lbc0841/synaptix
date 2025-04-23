@@ -1,0 +1,25 @@
+directories:
+  output: pack
+  buildResources: build
+appId: com.lbc0841.synaptix
+productName: synaptix
+files:
+  - filter:
+      - '**/*'
+      - '!.vscode'
+      - build/
+extraResources:
+  - from: node_modules/monaco-editor
+    to: app/node_modules/monaco-editor
+    filter:
+      - min/**/*
+  - from: bin
+    to: app/bin
+asar: false
+win:
+  icon: assets/icon.png
+mac:
+  icon: assets/icon.png
+linux:
+  icon: assets/icon.png
+electronVersion: 35.1.5

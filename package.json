@@ -15,14 +15,50 @@
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "pack-dist": "electron-builder" 
   },
   "devDependencies": {
+    "electron-builder": "^26.0.12",
     "electron": "^35.1.5"
   },
   "dependencies": {
     "iconv-lite": "^0.6.3",
     "monaco-editor": "^0.52.2",
     "pidusage": "^4.0.0"
+  },
+  "build": {
+    "appId": "com.lbc0841.synaptix",
+    "productName": "synaptix",
+    "directories": {
+      "output": "pack"
+    },
+    "files": [
+      "**/*",
+      "!.vscode",
+      "build/"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/monaco-editor",
+        "to": "app/node_modules/monaco-editor",
+        "filter": ["min/**/*"]
+      },
+      {
+        "from": "bin",
+        "to": "app/bin"
+      }
+    ],
+    "asar": false,  
+    "win": {
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "icon": "assets/icon.png"
+    }
   }
 }
