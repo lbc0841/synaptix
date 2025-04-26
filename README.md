@@ -5,22 +5,24 @@
 
 ### Introduction
 synaptix, a code editor like online judges (currently: C++)\
-Directly test stdin and output the results to stdout\
+Directly test stdin and output the results to stdout
 
-It comes with [winlibs](https://winlibs.com/) and does not require external installation of C++\
+- It comes with [winlibs](https://winlibs.com/) and does not require external installation of C++
 
 ![image](user_interface.png)
 
 ### Download
 `synaptix\pack\win-unpacked`\
-There is a free installation file\
+There is a free installation file
+
 
 ### Update Direction
 * Support Terminal
 * Support more languages
 * Modify interface and functions
 * Measure CPU time, memory
-* Added built-in theme library\
+* Added built-in theme library
+
 
 ### Give me some suggestions
 cracker04012008@gmail.com
